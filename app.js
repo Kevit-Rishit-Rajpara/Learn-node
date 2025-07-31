@@ -1,20 +1,19 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
-const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+require('dotenv').config();
 
 const productRoutes = require("./api/routes/products");
 const orderRoutes = require("./api/routes/orders");
 const userRoutes = require("./api/routes/user");
 
-mongoose.connect(
-  "mongodb+srv://rishitrajparakevit:rishitrajparakevit@cluster0.4bpo8.mongodb.net/"
-);
+mongoose.connect(process.env.MONGO_URI);
+
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads")); // Serve static files from the uploads directory
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");

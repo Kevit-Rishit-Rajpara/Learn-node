@@ -3,6 +3,8 @@ const router = express.Router();
 
 const checkAuth = require('../middleware/check-auth');
 const ProductController = require('../controller/products');
+const validate = require('../middleware/validate');
+const { createProductSchema, updateProductSchema } = require('../validators/products');
 
 const multer = require('multer');
 
@@ -39,10 +41,10 @@ router.get('/', ProductController.getAllProducts );
 router.get('/:productId', ProductController.getProductrDetails);
 
 // POST a new product
-router.post('/', checkAuth, upload.single('productImage'), ProductController.createProduct);
+router.post('/', checkAuth, upload.single('productImage'), validate(createProductSchema), ProductController.createProduct);
 
 // PUT (update) a product
-router.put('/:productId', checkAuth, ProductController.upldateProduct);
+router.put('/:productId', checkAuth, validate(updateProductSchema), ProductController.upldateProduct);
 
 // DELETE a product
 router.delete('/:productId', checkAuth, ProductController.deleteProduct);
