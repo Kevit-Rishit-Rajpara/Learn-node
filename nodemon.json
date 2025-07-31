@@ -1,5 +1,6 @@
 {
     "env":{
-        "MONGO_ATLAS_PW":"rishitrajparakevit"
+        "MONGO_ATLAS_PW":"rishitrajparakevit",
+        "JWT_KEY":"secret"
     }
 }

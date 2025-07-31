@@ -1,12 +1,14 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const mongoose = require("mongoose");
 
-const multer = require("multer");
+const checkAuth = require('../middleware/check-auth');
+const ProductController = require('../controller/products');
+
+const multer = require('multer');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -15,10 +17,10 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   // Accept images only
-  if (file.mimetype.startsWith("image/")) {
+  if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error("Not an image! Please upload an image."), false);
+    cb(new Error('Not an image! Please upload an image.'), false);
   }
 };
 
@@ -28,165 +30,21 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
-const Product = require("../models/product");
-const product = require("../models/product");
+const Product = require('../models/product');
 
 // GET all products
-router.get("/", (req, res, next) => {
-  Product.find()
-    .select("name price _id productImage")
-    .exec()
-    .then((products) => {
-      console.log(products);
-      if (products.length === 0) {
-        return res.status(404).json({
-          message: "No products found",
-        });
-      }
-      res.status(200).json({
-        message: "Products retrieved successfully",
-        products: products,
-        count: products.length,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
+router.get('/', ProductController.getAllProducts );
 
 // GET a product by ID
-router.get("/:productId", (req, res, next) => {
-  const productId = req.params.productId;
-  Product.findById(productId)
-    .select("name price _id productImage")
-    .exec()
-    .then((product) => {
-      console.log(product);
-      if (product) {
-        res.status(200).json({
-          message: "Product found",
-          product: product,
-          url: {
-            type: "GET",
-            url: `http://localhost:3000/products/${productId}`,
-          },
-        });
-      } else {
-        res.status(404).json({
-          message: "Product not found",
-        });
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
+router.get('/:productId', ProductController.getProductrDetails);
 
 // POST a new product
-router.post("/", upload.single("productImage"), (req, res, next) => {
-  console.log(req.file);
-  const product = new Product({
-    _id: new mongoose.Types.ObjectId(),
-    name: req.body.name,
-    price: req.body.price,
-    productImage: req.file.path, // Store the path of the uploaded image
-  });
-  product.save().then(
-    (result) => {
-      console.log(result);
-      res.status(201).json({
-        message: "Product created successfully",
-        createdProduct: product,
-      });
-    },
-    (error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    }
-  );
-});
+router.post('/', checkAuth, upload.single('productImage'), ProductController.createProduct);
 
 // PUT (update) a product
-router.put("/:productId", (req, res, next) => {
-  const productId = req.params.productId;
-  Product.updateOne(
-    { _id: productId },
-    { $set: { name: req.body.name, price: req.body.price } }
-  )
-    .exec()
-    .then((result) => {
-      console.log(result);
-      res.status(200).json({
-        message: "Product updated successfully",
-        productId: productId,
-        productName: req.body.name,
-        productDescription: req.body.description,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
-
-// PATCH (update) a product
-router.patch("/:productId", (req, res, next) => {
-  const productId = req.params.productId;
-  const updateOps = {};
-  for (const ops of req.body) {
-    updateOps[ops.propName] = ops.value;
-  }
-  console.log(updateOps);
-  Product.updateOne({ _id: productId }, { $set: updateOps })
-    .exec()
-    .then((result) => {
-      console.log(result);
-      res.status(200).json({
-        message: "Product updated successfully",
-        result: result,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
+router.put('/:productId', checkAuth, ProductController.upldateProduct);
 
 // DELETE a product
-router.delete("/:productId", (req, res, next) => {
-  const productId = req.params.productId;
-  Product.deleteOne({ _id: productId })
-    .exec()
-    .then((result) => {
-      console.log(result);
-      if (result.deletedCount === 0) {
-        return res.status(404).json({
-          message: "Product not found",
-        });
-      }
-      console.log("Product deleted successfully");
-      res.status(200).json({
-        message: "Product deleted successfully",
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
-        error: error,
-      });
-    });
-});
+router.delete('/:productId', checkAuth, ProductController.deleteProduct);
 
 module.exports = router;
